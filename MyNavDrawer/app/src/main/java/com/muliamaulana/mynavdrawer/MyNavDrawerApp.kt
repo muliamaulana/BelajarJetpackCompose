@@ -1,6 +1,5 @@
 package com.muliamaulana.mynavdrawer
 
-import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.layout.Box
@@ -9,44 +8,34 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.muliamaulana.mynavdrawer.ui.theme.MyNavDrawerTheme
-import kotlinx.coroutines.launch
 
 /**
  * Created by muliamaulana on 02/01/24.
@@ -54,15 +43,10 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun MyNavDrawerApp() {
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
+    val appState = rememberMyNavDrawerState()
 
-    BackPressHandler(enable = drawerState.isOpen) {
-        scope.launch {
-            drawerState.close()
-        }
+    BackPressHandler(enable = appState.drawerState.isOpen) {
+        appState.onBackPresse()
     }
 
     val items = listOf(
@@ -83,25 +67,17 @@ fun MyNavDrawerApp() {
     val selectedItem = remember { mutableStateOf(items[0]) }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { SnackbarHost(appState.snackbarHostState) },
         topBar = {
             MyTopBar(
-                onMenuClick = {
-                    scope.launch {
-                        if (drawerState.isClosed) {
-                            drawerState.open()
-                        } else {
-                            drawerState.close()
-                        }
-                    }
-                }
+                onMenuClick = appState::onMenuClick
             )
         }
     ) { paddingValues ->
         ModalNavigationDrawer(
             modifier = Modifier.padding(paddingValues),
-            drawerState = drawerState,
-            gesturesEnabled = drawerState.isOpen,
+            drawerState = appState.drawerState,
+            gesturesEnabled = appState.drawerState.isOpen,
             drawerContent = {
                 ModalDrawerSheet {
                     Text("This is Drawer", modifier = Modifier.padding(16.dp))
@@ -112,25 +88,7 @@ fun MyNavDrawerApp() {
                             label = { Text(text = item.title) },
                             selected = item == selectedItem.value,
                             onClick = {
-                                scope.launch {
-                                    drawerState.close()
-                                    val snackbarResult = snackbarHostState.showSnackbar(
-                                        message = context.resources.getString(
-                                            R.string.coming_soon,
-                                            item.title
-                                        ),
-                                        actionLabel = context.resources.getString(R.string.subscribe_question),
-                                        withDismissAction = false,
-                                        duration = SnackbarDuration.Short
-                                    )
-
-                                    if (snackbarResult == SnackbarResult.ActionPerformed) {
-                                        Toast.makeText(
-                                            context, context.getString(R.string.subscribed_info),
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                }
+                                appState.onItemSelected(item)
                                 selectedItem.value = item
 
                             },
@@ -145,7 +103,7 @@ fun MyNavDrawerApp() {
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        text = if (drawerState.isClosed) {
+                        text = if (appState.drawerState.isClosed) {
                             stringResource(id = R.string.swipe_to_open)
                         } else {
                             stringResource(id = R.string.swipe_to_close)
