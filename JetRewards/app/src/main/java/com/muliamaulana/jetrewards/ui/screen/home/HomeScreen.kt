@@ -1,13 +1,21 @@
 package com.muliamaulana.jetrewards.ui.screen.home
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import com.muliamaulana.jetrewards.R
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.muliamaulana.jetrewards.di.Injection
+import com.muliamaulana.jetrewards.model.OrderReward
+import com.muliamaulana.jetrewards.ui.ViewModelFactory
+import com.muliamaulana.jetrewards.ui.common.UiState
+import com.muliamaulana.jetrewards.ui.components.RewardItem
 
 /**
  * Created by muliamaulana on 19/01/24.
@@ -15,12 +23,54 @@ import com.muliamaulana.jetrewards.R
 
 @Composable
 fun HomeScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: HomeViewModel = viewModel(
+        factory = ViewModelFactory(Injection.provideRepository())
+    ),
+    navigationToDetail: (Long) -> Unit
 ) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
+
+    viewModel.uiState.collectAsState(initial = UiState.Loading).value.let { uiState ->
+        when (uiState) {
+            is UiState.Loading -> {
+                viewModel.getAllRewards()
+            }
+
+            is UiState.Success -> {
+                HomeContent(
+                    orderReward = uiState.data,
+                    modifier = modifier,
+                    navigationToDetail = navigationToDetail
+                )
+            }
+
+            is UiState.Error -> {}
+        }
+    }
+}
+
+@Composable
+fun HomeContent(
+    orderReward: List<OrderReward>,
+    modifier: Modifier = Modifier,
+    navigationToDetail: (Long) -> Unit
+) {
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(160.dp),
+        contentPadding = PaddingValues(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = modifier
     ) {
-        Text(stringResource(R.string.menu_home))
+        items(orderReward) { data ->
+            RewardItem(
+                image = data.reward.image,
+                title = data.reward.title,
+                requiredPoint = data.reward.requiredPoint,
+                modifier = Modifier.clickable {
+                    navigationToDetail(data.reward.id)
+                }
+            )
+        }
     }
 }
