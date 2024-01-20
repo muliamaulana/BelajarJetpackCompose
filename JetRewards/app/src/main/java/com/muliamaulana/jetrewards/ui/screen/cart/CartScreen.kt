@@ -39,6 +39,8 @@ fun CartScreen(
             Injection.provideRepository()
         )
     ),
+
+    onOrderButtonClicked: (String) -> Unit
 ) {
     viewModel.uiState.collectAsState(initial = UiState.Loading).value.let { uiState ->
         when (uiState) {
@@ -51,7 +53,8 @@ fun CartScreen(
                     state = uiState.data,
                     onProductChange = { rewardId, count ->
                         viewModel.updateOrderReward(rewardId, count)
-                    }
+                    },
+                    onOrderButtonClicked = onOrderButtonClicked
                 )
             }
 
@@ -65,6 +68,7 @@ fun CartScreen(
 fun CartContent(
     state: CartState,
     onProductChange: (id: Long, count: Int) -> Unit,
+    onOrderButtonClicked: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val shareMessage = stringResource(
@@ -111,11 +115,10 @@ fun CartContent(
             text = stringResource(id = R.string.total_order, state.totalRequiredPoint),
             enabled = state.orderReward.isNotEmpty(),
             onClick = {
-
+                onOrderButtonClicked(shareMessage)
             },
             modifier = Modifier.padding(16.dp)
         )
     }
-
 
 }
