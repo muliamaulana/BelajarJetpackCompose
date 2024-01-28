@@ -1,6 +1,9 @@
 package com.muliamaulana.newsapp.ui.detail
 
 import android.os.Bundle
+import android.view.ViewGroup
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -23,6 +26,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
 import com.muliamaulana.newsapp.R
@@ -130,7 +134,21 @@ fun NewsDetailContent(
                 .padding(paddingValues)
                 .fillMaxSize()
         ) {
+            AndroidView(
+                factory = {
+                    WebView(it).apply {
+                        layoutParams = ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                        )
 
+                        webViewClient = WebViewClient()
+                        loadUrl(url)
+                    }
+                },
+                update = {
+                    it.loadUrl(url)
+                })
         }
     }
 }
